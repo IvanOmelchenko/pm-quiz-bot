@@ -9,45 +9,16 @@ jobs:
   send-quiz:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Send PM question to Telegram
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: |
-          python3 << 'EOF'
-          import random, urllib.request, urllib.parse, json, os
-
-          TOKEN = os.environ['TELEGRAM_TOKEN']
-          CHAT_ID = os.environ['CHAT_ID']
-
-          QUESTIONS = [
-            {"q": "Ти PM у Spotify. Команда запустила персоналізований плейлист для подкастів. DAU виріс на 12%. Яка твоя North Star метрика для оцінки успіху?", "options": ["DAU фічі", "Кількість прослуханих подкастів із плейлиста на юзера/тиждень", "Загальний MAU", "NPS після запуску"], "answer": "B", "explanation": "North Star має відображати цінність для юзера. Кількість прослуханих подкастів — реальна поведінка, не просто відкриття."},
-            {"q": "Ти PM у Duolingo. Після введення стрік-нагород D7 Retention виріс. Яку метрику перевириш щоб зрозуміти — це справжній retention чи страх втратити стрік?", "options": ["DAU/MAU ratio", "NPS", "Retention після втрати стріку", "Кількість нових реєстрацій"], "answer": "C", "explanation": "Якщо retention після втрати стріку різко падає — юзери поверталися через страх, а не через цінність продукту."},
-            {"q": "Ти PM у Instagram. Команда прибрала лайки. Яка guardrail метрика найважливіша?", "options": ["Кількість нових авторів", "Рекламний revenue і кількість активних рекламодавців", "DAU глядачів", "Час сесії"], "answer": "B", "explanation": "Instagram заробляє на рекламі. Guardrail — рекламний revenue і активність рекламодавців."},
-            {"q": "Ти PM у Nova Poshta. MAU виріс на 20% після рекламної кампанії. Яка перша метрика покаже чи це якісне зростання?", "options": ["Загальний revenue", "CAC нових юзерів", "D7/D30 Retention нових юзерів", "Кількість завантажень"], "answer": "C", "explanation": "Рекламна кампанія може привести дешевих юзерів з низьким LTV. D7/D30 retention покаже чи залишаються вони."},
-            {"q": "Ти PM у Liven. AI-план харчування запущено. Яка Supporting метрика покаже що юзер отримує цінність від фічі?", "options": ["DAU", "Daily plan completion rate", "Кількість реєстрацій", "MAU"], "answer": "B", "explanation": "Completion rate — поведінкова метрика, яка показує реальну залученість, а не просто відкриття."},
-            {"q": "Ти PM у Slack. Кількість повідомлень на юзера впала на 10%. Що це НАЙІМОВІРНІШЕ означає?", "options": ["Продукт погіршився", "Юзери перейшли до конкурентів", "Потрібно більше контексту — це може бути і добре і погано", "Треба терміново нові фічі"], "answer": "C", "explanation": "Без когортного аналізу висновок робити не можна. Може бути і добре (треди), і погано (відтік)."},
-            {"q": "Ти PM у Rozetka. Конверсія в покупку впала після редизайну. Яка перша дія?", "options": ["Відкатити редизайн", "Провести A/B тест старої і нової версії", "Запустити опитування юзерів", "Збільшити рекламний бюджет"], "answer": "B", "explanation": "Перш ніж відкочувати — треба підтвердити що проблема саме в редизайні через A/B тест."},
-            {"q": "Ти PM у TikTok. DAU/MAU ratio — 65%. Що це означає?", "options": ["65% юзерів відписались за місяць", "Продукт дуже 'липкий' — 65% MAU повертається щодня", "Конверсія в платних юзерів — 65%", "Охоплення реклами — 65%"], "answer": "B", "explanation": "DAU/MAU ratio = стікінес продукту. 65% означає що 65% місячної аудиторії використовує додаток щодня."},
-            {"q": "Ти PM у Notion. Churn виріс на 2%. Яким буде ПЕРШИЙ крок у діагностиці?", "options": ["Запустити промо-акцію", "Сегментувати churn по типу юзерів (новий/старий, план, use case)", "Додати нові фічі", "Знизити ціну"], "answer": "B", "explanation": "Churn — симптом, не діагноз. Сегментація покаже де саме проблема."},
-            {"q": "Ти PM у Amazon. Фіча 'Buy Again' в один клік запущена. Яка guardrail метрика?", "options": ["Загальний revenue", "DAU", "Return rate товарів (щоб юзери не купували помилково)", "Кількість нових юзерів"], "answer": "C", "explanation": "Один клік = ризик випадкових покупок. Guardrail — return rate."},
-            {"q": "Ти PM у Uber. Середній час очікування виріс з 4 до 7 хвилин. Яку метрику перевириш ПЕРШОЮ?", "options": ["Revenue", "DAU водіїв в годинах пік (supply side)", "NPS пасажирів", "Кількість нових водіїв"], "answer": "B", "explanation": "Uber — двостороння платформа. Час очікування = проблема з supply. Перевіряємо DAU водіїв в пікові години."},
-            {"q": "Ти PM у LinkedIn. AI-підказки для постів запущені. Яка правильна структура метрик?", "options": ["DAU → MAU → Revenue", "North Star (retention авторів) → Supporting (adoption, частота постів) → Guardrail (engagement аудиторії)", "NPS → Conversion → Churn", "Installs → Sessions → Revenue"], "answer": "B", "explanation": "Правильна структура завжди: North Star → Supporting → Guardrail."},
-            {"q": "Ти PM у Monobank. Conversion rate нової фічі — 2%. Як зрозуміти чи це добре?", "options": ["Порівняти з минулим місяцем", "Провести опитування юзерів", "Порівняти з бенчмарком по індустрії та схожими фічами", "Збільшити рекламний бюджет"], "answer": "C", "explanation": "2% само по собі нічого не означає. Для фінтех може бути норма, для e-commerce — мало. Завжди потрібен контекст."},
-            {"q": "Ти PM у Headspace. Retention D30 — 12%. Як правильно інтерпретувати?", "options": ["Погано, треба терміново змінювати", "Добре, більшість SaaS нижче 10%", "Неможливо оцінити без бенчмарку по категорії і когортного аналізу", "Нормально для мобільних"], "answer": "C", "explanation": "12% може бути відмінним для медитаційного додатку або поганим для щоденного інструменту. Потрібен бенчмарк."},
-            {"q": "Ти PM у YouTube. Тривалість сесії виросла на 15%. Яка guardrail метрика покаже що це не за рахунок нав'язливого контенту?", "options": ["DAU", "Кількість скарг, відписок і 'не рекомендувати' реакцій", "MAU", "Revenue від реклами"], "answer": "B", "explanation": "Guardrail: negative signals — скарги, відписки, 'не рекомендувати'."}
-          ]
-
-          GREETINGS = ["Привіт, Іване! Час потренуватись 💪", "Іване, питання години — готовий?", "Хвилина PM-тренування:", "Тримаєш форму? Питання для тебе:", "Не забував про метрики? Ось нове:"]
-
-          q = random.choice(QUESTIONS)
-          greeting = random.choice(GREETINGS)
-          options_text = "\n".join([f"{chr(65+i)}) {opt}" for i, opt in enumerate(q["options"])])
-          message = f"{greeting}\n\n🎯 *Питання:*\n_{q['q']}_\n\n{options_text}\n\n_Відповідай A, B, C або D у боті @yivanpmbot_"
-
-          data = urllib.parse.urlencode({"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}).encode()
-          req = urllib.request.Request(f"https://api.telegram.org/bot{TOKEN}/sendMessage", data=data, method="POST")
-          with urllib.request.urlopen(req, timeout=10) as r:
-              result = json.loads(r.read())
-              print("OK" if result.get("ok") else f"Error: {result}")
-          EOF
+        run: python quiz_runner.py
